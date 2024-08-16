@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 
 import videogame_library.controller.model.VideogameData;
 import videogame_library.controller.model.VideogameData.GenreData;
+import videogame_library.controller.model.VideogameData.PublisherData;
 import videogame_library.dao.GenreDao;
 import videogame_library.dao.PublisherDao;
 import videogame_library.dao.VideogameDao;
@@ -107,7 +108,8 @@ public class VideogameService {
 
 		videogame.getGenres().add(genre);
 		genre.getVideogames().add(videogame);
-
+		videogameDao.save(videogame);
+		genreDao.save(genre);
 		return new VideogameData(videogame);
 	}
 
@@ -122,19 +124,59 @@ public class VideogameService {
 		return results;
 	}
 
+	public GenreData getGenreById(Long genreId) {
+		Genre genre = findGenreById(genreId);
+		return new GenreData(genre);
+	}
+	
 	public VideogameData removeGenres(Long videogameId) {
 		Videogame videogame = findVideogameById(videogameId);
 		videogame.getGenres().clear();
 
 		return new VideogameData(videogame);
 	}
-
-	// Publisher
-	private Publisher findPublisherById(Long publisherId) {
-		return publisherDao.findById(publisherId)
-				.orElseThrow(() -> new NoSuchElementException("Publisher where ID=" + publisherId + "does not exist"));
+	
+	public VideogameData removeGenreFromVideogameById(Long videogameId, Long genreId) {
+		Videogame videogame = findVideogameById(videogameId);
+		Genre genre = findGenreById(genreId);
+		
+		videogame.getGenres().remove(genre);
+		videogameDao.save(videogame);
+		return new VideogameData(videogame);
 	}
 
+	public void deletGenreById(Long genreId) {
+		genreDao.deleteById(genreId);
+	}
+
+	// Publisher
+	public PublisherData createPublisher(PublisherData publisherData) {
+		Long publisherId = publisherData.getPublisherId();
+		Publisher publisher = findOrCreatePublisher(publisherId);
+
+		publisher.setPublisherId(publisherId);
+		publisher.setPublisherName(publisherData.getPublisherName());
+		Publisher savedPublisher = publisherDao.save(publisher);
+		return new PublisherData(savedPublisher);
+	}
+
+	public List<PublisherData> getAllPublishers() {
+		List<Publisher> publishers = publisherDao.findAll();
+		List<PublisherData> results = new LinkedList<>();
+		
+		for(Publisher publisher : publishers) {
+			PublisherData pd = new PublisherData(publisher);
+			results.add(pd);
+		}
+		
+		return results;
+	}
+	
+	public PublisherData getPublisherById(Long publisherId) {
+		Publisher publisher = findPublisherById(publisherId);
+		return new PublisherData(publisher);
+	}
+	
 	public VideogameData changePublisher(Long publisherId, Long videogameId) {
 		Publisher publisher = findPublisherById(publisherId);
 		Videogame videogame = findVideogameById(videogameId);
@@ -179,6 +221,44 @@ public class VideogameService {
 	private Videogame findVideogameById(Long videogameId) {
 		return videogameDao.findById(videogameId)
 				.orElseThrow(() -> new NoSuchElementException("Videogame where ID=" + videogameId + " does not exist"));
+	}
+
+	private Publisher findPublisherById(Long publisherId) {
+		return publisherDao.findById(publisherId)
+				.orElseThrow(() -> new NoSuchElementException("Publisher where ID=" + publisherId + "does not exist"));
+	}
+
+	private Publisher findOrCreatePublisher(Long publisherId) {
+		Publisher publisher;
+
+		if (Objects.isNull(publisherId)) {
+			publisher = new Publisher();
+		} else {
+			publisher = findPublisherById(publisherId);
+		}
+		return publisher;
+	}
+
+	public GenreData createGenre(GenreData genreData) {
+		Long genreId = genreData.getGenreId();
+		Genre genre = findOrCreateGenre(genreId);
+
+		genre.setGenreId(genreId);
+		genre.setGenreName(genreData.getGenreName());
+
+		Genre savedGenre = genreDao.save(genre);
+		return new GenreData(savedGenre);
+	}
+
+	private Genre findOrCreateGenre(Long genreId) {
+		Genre genre;
+
+		if (Objects.isNull(genreId)) {
+			genre = new Genre();
+		} else {
+			genre = findGenreById(genreId);
+		}
+		return genre;
 	}
 
 }
