@@ -1,0 +1,15 @@
+spring:
+   datasource:
+      username: videogame_library
+      password: videogame_library
+      url: jdbc:mysql://localhost:3306/videogame_library
+      
+   jpa:
+      hibernate:
+         ddl-auto: update
+      show-sql: true
+      defer-datasource-initialization: true
+      
+   sql:
+      init:
+         mode: never 
